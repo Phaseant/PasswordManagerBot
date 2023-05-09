@@ -97,6 +97,7 @@ func (p *Processor) doDelete(chatID int, userID string) error {
 func (p *Processor) doGet(chatID int, userID string) error {
 	const inputService = "Введите название сервиса"
 	service, msgID, err := p.sendMsgAndProcessWithMsgID(inputService, chatID)
+	go p.deleteMessage(chatID, msgID)
 	if err != nil {
 		return err
 	}
