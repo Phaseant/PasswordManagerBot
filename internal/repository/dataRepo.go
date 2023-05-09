@@ -20,7 +20,8 @@ type DataRepository struct {
 	secretKey string
 }
 
-func (r *DataRepository) Add(service, username, password, userID string) error {
+// Add docs to DB
+func (r DataRepository) Add(service, username, password, userID string) error {
 	collection := r.db.Database(DBName).Collection(DataCol)
 	doc := Document{
 		Service:  service,
@@ -38,29 +39,42 @@ func (r *DataRepository) Add(service, username, password, userID string) error {
 	}
 	return nil
 }
-func (r *DataRepository) Delete(serive, userID string) error {
+
+// Delete docs from DB
+func (r DataRepository) Delete(serive, username, userID string) error {
 	collection := r.db.Database(DBName).Collection(DataCol)
-	filter := bson.D{{Key: "service", Value: serive}, {Key: "userID", Value: userID}}
+	filter := bson.D{{Key: "service", Value: serive}, {Key: "userID", Value: userID}, {Key: "username", Value: username}}
 	_, err := collection.DeleteOne(context.Background(), filter)
 	if err != nil {
 		return err
 	}
 	return nil
 }
-func (r *DataRepository) Get(service, userID string) (string, string, error) {
+
+// Get docs from DB
+func (r DataRepository) Get(service, userID string) ([]ServiceCreds, error) {
 	collection := r.db.Database(DBName).Collection(DataCol)
 
-	var doc Document
+	var docs []Document
+
+	records := []ServiceCreds{}
 
 	filter := bson.D{{Key: "service", Value: service}, {Key: "userID", Value: userID}}
-	err := collection.FindOne(context.Background(), filter).Decode(&doc)
-	if err != nil {
-		return "", "", err
+	cursor, _ := collection.Find(context.Background(), filter)
+	if err := cursor.All(context.Background(), &docs); err != nil {
+		return nil, err
 	}
-	log.Println("db.Get: returned login and password for user: ", userID, " and service: ", service)
-	return doc.Username, r.getPassword(doc.Password), nil
+	if len(docs) > 0 {
+		for _, doc := range docs {
+			records = append(records, ServiceCreds{Login: doc.Username, Password: r.getPassword(doc.Password)})
+		}
+		return records, nil
+	} else {
+		return nil, errors.New("no documents found for this service")
+	}
 }
 
+// Hash all passwords, secret key is in config
 func (r DataRepository) createHash(password string) string {
 	encrypted, err := encrypt(r.secretKey, password)
 	if err != nil {
@@ -70,6 +84,7 @@ func (r DataRepository) createHash(password string) string {
 
 }
 
+// decrypt password from DB and return as string
 func (r DataRepository) getPassword(password string) string {
 	decrypted, err := decrypt(r.secretKey, password)
 	if err != nil {
@@ -78,6 +93,7 @@ func (r DataRepository) getPassword(password string) string {
 	return decrypted
 }
 
+// encrypt and decrypt functions
 func encrypt(keyStr string, message string) (encoded string, err error) {
 	key := []byte(keyStr)
 	//Create byte array from the input string

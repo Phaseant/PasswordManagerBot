@@ -22,7 +22,7 @@ func New(fetcher events.Fetcher, processor events.Processor, batchSize int) *Con
 }
 
 func (c Consumer) Start() {
-	log.Print("consumer started")
+	log.Print("Bot started")
 	for {
 		gotEvents, err := c.fetcher.Fetch(c.batchSize)
 		if err != nil {
@@ -46,14 +46,15 @@ func (c Consumer) Start() {
 	}
 }
 
-func (c Consumer) handleEvents(events []events.Event) error {
-	for _, e := range events {
-		log.Printf("Consumer: got event: %v", e)
-		if err := c.processor.Process(e); err != nil {
-			log.Printf("Consumer: failed to process event: %s", err.Error())
-
-			continue
+func (c Consumer) handleEvents(newEvents []events.Event) error {
+	for _, e := range newEvents {
+		if e.Type != events.Unknown {
+			log.Printf("Consumer: got event: %v", e)
+			if err := c.processor.Process(e); err != nil {
+				log.Printf("Consumer: failed to process event: %s", err.Error())
+			}
 		}
+		continue
 	}
 
 	return nil

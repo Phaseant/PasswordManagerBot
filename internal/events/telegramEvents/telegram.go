@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/Phaseant/PasswordManagerBot/internal/events"
+	"github.com/Phaseant/PasswordManagerBot/internal/repository"
 	"github.com/Phaseant/PasswordManagerBot/internal/telegram"
 )
 
@@ -15,12 +16,14 @@ type Meta struct {
 type Processor struct {
 	tg     *telegram.Client
 	offset int
+	repo   *repository.Repository
 }
 
-func New(tg *telegram.Client) *Processor {
+func New(tg *telegram.Client, repo *repository.Repository) *Processor {
 	return &Processor{
 		tg:     tg,
 		offset: 0,
+		repo:   repo,
 	}
 }
 
@@ -33,7 +36,9 @@ func (p *Processor) Fetch(limit int) ([]events.Event, error) {
 	res := make([]events.Event, len(updates))
 
 	for _, u := range updates {
-		res = append(res, event(u))
+		event := event(u)
+		event.MessageID = u.Message.MessageID
+		res = append(res, event)
 	}
 
 	if len(updates) > 0 {

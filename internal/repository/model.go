@@ -6,3 +6,8 @@ type Document struct {
 	Password string `bson:"password"`
 	UserID   string `bson:"userID"`
 }
+
+type ServiceCreds struct {
+	Login    string
+	Password string
+}

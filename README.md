@@ -1,5 +1,6 @@
 # Vk Bot
-Telegram bot for VK internship
+
+Password manager telegram bot for VK Internship
 
 Made in Go with ❤️
 
@@ -7,3 +8,13 @@ Made in Go with ❤️
 Open @phaseantPasswordManagerBot in telegram.
 
 ### Features
+
+- Add new logins and passwords to services
+
+- Get your passwords
+
+- Delete your passwords
+
+- Getted passwords dissapear from chat after 30 seconds
+
+- Runs in docker on my server in Amsterdam

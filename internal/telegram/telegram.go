@@ -28,6 +28,7 @@ func newBasePath(token string) string {
 	return "bot" + token
 }
 
+// get updates from telegram
 func (c *Client) Updates(offset, limit int) ([]Update, error) {
 	q := url.Values{}
 	q.Add("offset", strconv.Itoa(offset))
@@ -48,6 +49,7 @@ func (c *Client) Updates(offset, limit int) ([]Update, error) {
 
 }
 
+// base func to send requests
 func (c *Client) doRequest(method string, query url.Values) ([]byte, error) {
 	u := url.URL{
 		Scheme: "https",
@@ -76,17 +78,11 @@ func (c *Client) doRequest(method string, query url.Values) ([]byte, error) {
 	return body, nil
 }
 
-func (c *Client) SendMessage(chatID int, text string, keyboard ReplyKeyboardMarkup) error {
+// send message to telegram
+func (c *Client) SendMessage(chatID int, text string) error {
 	q := url.Values{}
 	q.Add("chat_id", strconv.Itoa(chatID))
 	q.Add("text", text)
-	if keyboard.Keyboard != nil {
-		keyboardJSON, err := json.Marshal(keyboard)
-		if err != nil {
-			return errors.New("failed to marshal keyboard: " + err.Error())
-		}
-		q.Add("reply_markup", string(keyboardJSON))
-	}
 
 	_, err := c.doRequest("sendMessage", q)
 	if err != nil {
@@ -95,21 +91,15 @@ func (c *Client) SendMessage(chatID int, text string, keyboard ReplyKeyboardMark
 	return nil
 }
 
-func (c *Client) SendPicture(chatID int, imageURL string, keyboard ReplyKeyboardMarkup) error {
+// delete message from telegram
+func (c *Client) DeleteMessage(chatID int, msgId int) error {
 	q := url.Values{}
 	q.Add("chat_id", strconv.Itoa(chatID))
-	q.Add("photo", imageURL)
-	if keyboard.Keyboard != nil {
-		keyboardJSON, err := json.Marshal(keyboard)
-		if err != nil {
-			return errors.New("failed to marshal keyboard: " + err.Error())
-		}
-		q.Add("reply_markup", string(keyboardJSON))
-	}
+	q.Add("message_id", strconv.Itoa(msgId))
 
-	_, err := c.doRequest("sendPhoto", q)
+	_, err := c.doRequest("deleteMessage", q)
 	if err != nil {
-		return errors.New("failed to send picture: " + err.Error())
+		return errors.New("failed to delete message: " + err.Error())
 	}
 	return nil
 }
