@@ -94,6 +94,7 @@ func (r DataRepository) getPassword(password string) string {
 }
 
 // encrypt and decrypt functions
+// Shoutout to https://gist.github.com/mickelsonm/e1bf365a149f3fe59119
 func encrypt(keyStr string, message string) (encoded string, err error) {
 	key := []byte(keyStr)
 	//Create byte array from the input string
