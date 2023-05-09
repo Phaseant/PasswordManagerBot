@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"log"
 
 	eventconsumer "github.com/Phaseant/PasswordManagerBot/internal/consumer/eventConsumer"
@@ -8,6 +10,8 @@ import (
 	"github.com/Phaseant/PasswordManagerBot/internal/repository"
 	"github.com/Phaseant/PasswordManagerBot/internal/telegram"
 	"github.com/spf13/viper"
+	"github.com/xlab/closer"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 const (
@@ -15,7 +19,10 @@ const (
 	batchSize = 100
 )
 
+var db *mongo.Client
+
 func main() {
+	closer.Bind(clearDB) //close DB connection
 	initConfig()
 
 	tg := telegram.New(HOST, getApiToken()) //telegram client
@@ -28,10 +35,14 @@ func main() {
 		log.Fatalf("Unable to connect to database: %v", err)
 	}
 	repo := repository.New(db, viper.GetString("SECRET_KEY")) //repository to work with DB
+	eventsProcessor := telegramEvents.New(tg, repo)           //telegram events processor
+	consumer := eventconsumer.New(eventsProcessor, eventsProcessor, batchSize)
+	go func() {
+		consumer.Start()
+		closer.Close() //graceful shutdown
+	}()
 
-	eventsProcessor := telegramEvents.New(tg, repo) //telegram events processor
-	eventconsumer.New(eventsProcessor, eventsProcessor, batchSize).Start()
-
+	closer.Hold()
 }
 
 func getApiToken() string {
@@ -48,4 +59,9 @@ func initConfig() error {
 	viper.AddConfigPath("configs")
 	viper.SetConfigName("config")
 	return viper.ReadInConfig()
+}
+
+func clearDB() {
+	fmt.Println("\nBye bye...")
+	db.Disconnect(context.Background())
 }

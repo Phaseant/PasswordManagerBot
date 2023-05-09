@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/spf13/viper v1.15.0
+	github.com/xlab/closer v1.1.0
 	go.mongodb.org/mongo-driver v1.11.6
 )
 
