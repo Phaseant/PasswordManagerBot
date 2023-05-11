@@ -1,4 +1,4 @@
-# Vk Bot
+# Password Manager Bot
 
 Password manager telegram bot for VK Internship
 
