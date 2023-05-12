@@ -4,9 +4,6 @@ Password manager telegram bot for VK Internship
 
 Made in Go with ❤️
 
-## Notice
-12 мая с 15:00 до 15:20 будут плановые работы на хосте моего сервера, сервер будет не в сети, пожалуйста, зайдите попозже 
-
 ## Usage
 Open @phaseantPasswordManagerBot in telegram.
 
