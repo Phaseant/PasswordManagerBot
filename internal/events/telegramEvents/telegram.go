@@ -37,7 +37,9 @@ func (p *Processor) Fetch(limit int) ([]events.Event, error) {
 
 	for _, u := range updates {
 		event := event(u)
-		event.MessageID = u.Message.MessageID
+		if u.Message != nil {
+			event.MessageID = u.Message.MessageID //for msg delete
+		}
 		res = append(res, event)
 	}
 
