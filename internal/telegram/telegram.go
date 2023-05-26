@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"path"
 	"strconv"
+	"time"
 )
 
 type Client struct {
@@ -34,9 +37,9 @@ func (c *Client) Updates(offset, limit int) ([]Update, error) {
 	q.Add("offset", strconv.Itoa(offset))
 	q.Add("limit", strconv.Itoa(limit))
 
-	data, err := c.doRequest("getUpdates", q)
+	data, err := c.doReqWithTimeout(q)
 	if err != nil {
-		return nil, errors.New("failed to get updates: " + err.Error())
+		return nil, errors.New("failed to do request: " + err.Error())
 	}
 
 	var res UpdatesResponse
@@ -47,6 +50,28 @@ func (c *Client) Updates(offset, limit int) ([]Update, error) {
 
 	return res.Updates, nil
 
+}
+
+// func to do request with exponential backoff
+func (c *Client) doReqWithTimeout(q url.Values) ([]byte, error) {
+	maxRetries := 5
+	retryDelay := 1 * time.Second
+	var data []byte
+	var err error
+
+	for i := 0; i < maxRetries; i++ {
+		data, err = c.doRequest("getUpdates", q) //do request
+		if err == nil {
+			return data, nil
+		}
+		log.Print("failed to do request: " + err.Error() + ", retrying...")
+		delay := time.Duration(1<<uint(i)) * retryDelay        //delay
+		jitter := time.Duration(rand.Int63n(int64(delay / 2))) //jitter to avoid synchronized requests
+		sleepTime := delay + jitter
+		time.Sleep(sleepTime)
+	}
+
+	return nil, errors.New("failed to do request: " + err.Error())
 }
 
 // base func to send requests
